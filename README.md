@@ -406,6 +406,8 @@ npm run dev
 <summary><b>✦ Directory Map</b></summary>
 <br>
 
+> **Repository:** `rwa-cash-terminal` · **RWA Cash Terminal**
+
 ```
 rwa-cash-terminal/
 │
@@ -418,7 +420,9 @@ rwa-cash-terminal/
 ├── 📂 src/
 │   ├── main.tsx                           # React root
 │   ├── App.tsx                            # Router + providers
-│   ├── index.css                          # Global styles
+│   │
+│   ├── 📂 components/
+│   │   └── Layout.tsx                     # ◈ Layout component
 │   │
 │   ├── 📂 pages/
 │   │   ├── Dashboard.tsx                  # ◈ Portfolio overview
@@ -433,6 +437,7 @@ rwa-cash-terminal/
 │   │   ├── allocation-engine/
 │   │   │   └── index.ts                   # ⚙ Profile → bucket split
 │   │   └── protocol-adapters/
+│   │       ├── index.ts                   # Adapter exports
 │   │       ├── BalancerAdapter.ts         # ⌬ Balancer V2 join/exit
 │   │       ├── VaultAdapter.ts            # ⌬ EIP-4626 deposit/withdraw
 │   │       └── types.ts                   # ⌬ Adapter interfaces
@@ -455,9 +460,12 @@ rwa-cash-terminal/
 │   │   ├── rebalanceAdvisory.ts           # Drift detection
 │   │   ├── eligibilityCheck.ts            # Access gating
 │   │   ├── receiptExport.ts               # JSON/PDF export
-│   │   ├── passportHash.ts                # Passport hashing
 │   │   ├── passportPdf.ts                 # Passport PDF render
-│   │   └── portfolioHistory.ts            # History snapshots
+│   │   ├── portfolioHistory.ts            # History snapshots
+│   │   ├── riskDataProvider.ts            # Risk data utilities
+│   │   ├── riskStatus.ts                  # Risk status helpers
+│   │   ├── configValidator.ts             # Config validation
+│   │   └── parseReceivedAmount.ts         # Amount parsing
 │   │
 │   └── 📂 types/
 │       └── index.ts                       # Shared type definitions
@@ -466,11 +474,6 @@ rwa-cash-terminal/
 │   ├── script/deploy.ts                   # Pool deployment script
 │   ├── contract/SepoliaVault.sol           # EIP-4626 vault contract
 │   └── output/deployment.json             # Deployment artifacts
-│
-└── 📂 docs/
-    ├── 前端审阅报告_占位与Demo数据分析.md       # Frontend audit report
-    ├── 迁移指南_从LTV切换到自建Sepolia金库.md   # Vault migration guide
-    └── 方案与设计_Sepolia_自建EIP4626金库.md    # EIP-4626 design doc
 ```
 
 </details>
@@ -829,44 +832,9 @@ journey
 
 ## 📚 Documentation
 
-<table>
-<tr>
-<td width="33%" align="center">
-
-**📋 Protocol Spec**
-
-[`SPEC_real_protocols.md`](./SPEC_real_protocols.md)
-
-Full protocol integration specification with allocation rules, risk definitions, and execution pipeline.
-
-</td>
-<td width="33%" align="center">
-
-**🔍 Frontend Audit**
-
-[`前端审阅报告`](./docs/前端审阅报告_占位与Demo数据分析.md)
-
-Placeholder and demo data analysis across all UI components.
-
-</td>
-<td width="33%" align="center">
-
-**🏗 Vault Design**
-
-[`EIP-4626 设计方案`](./docs/方案与设计_Sepolia_自建EIP4626金库.md)
-
-SepoliaVault design rationale and implementation details.
-
-</td>
-</tr>
-<tr>
-<td colspan="3" align="center">
-
-**🔄 Migration Guide** — [`迁移指南_从LTV切换到自建Sepolia金库.md`](./docs/迁移指南_从LTV切换到自建Sepolia金库.md)
-
-</td>
-</tr>
-</table>
+| Document | Description |
+|----------|-------------|
+| **📋 Protocol Spec** | [`SPEC_real_protocols.md`](./SPEC_real_protocols.md) — Full protocol integration specification with allocation rules, risk definitions, and execution pipeline. |
 
 <br>
 
