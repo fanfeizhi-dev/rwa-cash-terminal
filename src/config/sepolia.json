@@ -1,0 +1,26 @@
+{
+  "balancer": {
+    "vault": "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
+    "poolId": "0x440953587224069bea16c06946a9f092915f0c750002000000000000000002d0",
+    "bptToken": "0x440953587224069bEa16c06946a9F092915f0c75",
+    "tokens": [
+      "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9"
+    ]
+  },
+  "ltvVault": {
+    "vault": "0xbeEE823aF197043bdD41703eAF239F97DDE89253",
+    "asset": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"
+  },
+  "assets": {
+    "USDC": {
+      "address": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+      "decimals": 6
+    }
+  },
+  "whitelist": {
+    "registry": null,
+    "mode": "permissive",
+    "fallbackList": []
+  }
+}

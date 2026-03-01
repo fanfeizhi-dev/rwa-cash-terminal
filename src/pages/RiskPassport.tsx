@@ -1,0 +1,327 @@
+import React, { useState } from 'react';
+import { useAppStore } from '../store';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
+import { exportPassportPdf } from '../utils/passportPdf';
+import { getMetricStatus } from '../utils/riskStatus';
+
+function RiskSourceBadge({ source }: { source?: string }) {
+  if (!source || source === 'demo_defaults') {
+    return (
+      <span className="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded font-bold uppercase tracking-wider border border-amber-200">
+        DEMO DEFAULTS
+      </span>
+    );
+  }
+  if (source === 'on_chain_heuristics') {
+    return (
+      <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold uppercase tracking-wider border border-blue-100">
+        ON-CHAIN HEURISTICS
+      </span>
+    );
+  }
+  if (source === 'defi_safety_api') {
+    return (
+      <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold border border-emerald-200 uppercase tracking-wider">
+        LIVE RISK FEED
+      </span>
+    );
+  }
+  return (
+    <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold uppercase tracking-wider border border-blue-100">
+      {source.toUpperCase().replace(/_/g, ' ')}
+    </span>
+  );
+}
+
+function EligibilityBadge({ source }: { source?: string }) {
+  if (source === 'on_chain_registry') {
+    return (
+      <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold border border-emerald-200 uppercase tracking-wider">
+        VERIFIED ON-CHAIN
+      </span>
+    );
+  }
+  if (source === 'permissive_mode') {
+    return (
+      <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold uppercase tracking-wider border border-blue-100">
+        PERMISSIVE MODE
+      </span>
+    );
+  }
+  if (source === 'local_whitelist') {
+    return (
+      <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold uppercase tracking-wider border border-blue-100">
+        LOCAL WHITELIST
+      </span>
+    );
+  }
+  return (
+    <span className="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded font-bold border border-amber-200 uppercase tracking-wider">
+      SELF-DECLARED
+    </span>
+  );
+}
+
+export default function RiskPassport() {
+  const { plan } = useAppStore();
+  const eligibilityStatus = useAppStore((s) => s.eligibilityStatus);
+  const riskConfig = useAppStore((s) => s.riskConfig);
+  const [copied, setCopied] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [sourcesExpanded, setSourcesExpanded] = useState(false);
+
+  if (!plan) return null;
+
+  const isEligible = plan.inputs.eligibility === 'eligible';
+  const riskSource = plan.passport.riskDimensionsSource;
+  const riskDataSources = plan.passport.riskDataSources;
+
+  const eligibilitySource = eligibilityStatus?.source ?? plan.inputs.eligibilitySource;
+  const eligibilityIcon = eligibilitySource === 'on_chain_registry' ? 'text-emerald-600'
+    : eligibilitySource === 'permissive_mode' ? 'text-blue-600'
+    : isEligible ? 'text-blue-600' : 'text-red-600';
+
+  const handleCopyHash = async () => {
+    if (!plan.passport.hash) return;
+    await navigator.clipboard.writeText(plan.passport.hash);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleExportPdf = () => {
+    setExporting(true);
+    exportPassportPdf(plan, plan.passport.hash || '').finally(() => setExporting(false));
+  };
+
+  const radarData = [
+    { subject: 'Smart Contract', A: plan.passport.radarData.contract, fullMark: 100 },
+    { subject: 'Liquidity', A: plan.passport.radarData.liquidity, fullMark: 100 },
+    { subject: 'Market', A: plan.passport.radarData.market, fullMark: 100 },
+    { subject: 'Pricing', A: plan.passport.radarData.oracle, fullMark: 100 },
+    { subject: 'Operational', A: plan.passport.radarData.operational, fullMark: 100 },
+  ];
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 mb-1">Risk Passport</h1>
+          <p className="text-sm text-slate-500">
+            Institutional compliance framework and live risk assessment.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={handleExportPdf} disabled={exporting} className="px-3 py-1.5 bg-white border border-slate-200 rounded text-xs font-medium text-slate-900 hover:bg-gray-50 flex items-center gap-2 disabled:opacity-50">
+            <span className="material-symbols-outlined text-[16px]">print</span>
+            {exporting ? 'Generating...' : 'Export PDF'}
+          </button>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white rounded shadow-sm border border-slate-200 p-6 relative">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Composite Risk Score</h3>
+                {plan.aprSources && (plan.aprSources.bucketA.isEstimated || plan.aprSources.bucketB.isEstimated) && (
+                  <span className="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded font-bold uppercase tracking-wider border border-amber-200">
+                    APR DATA ESTIMATED
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 font-mono">UPDATED: {plan.generatedAt || plan.aprSources?.fetchedAt || '—'}</p>
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+              GRADE: {plan.passport.grade}
+            </span>
+          </div>
+          <div className="flex flex-col md:flex-row gap-8">
+            <div className="flex-1">
+              <div className="flex items-baseline gap-3 mb-6">
+                <span className="text-5xl font-bold text-slate-900 tracking-tight">{plan.passport.score}</span>
+                <span className="text-lg text-slate-500 font-normal">/ 100</span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-sm h-2 mb-4 overflow-hidden">
+                <div className="bg-emerald-500 h-2 rounded-sm shadow-[0_0_10px_rgba(16,185,129,0.5)]" style={{ width: `${plan.passport.score}%` }}></div>
+              </div>
+            </div>
+            <div className="flex-1 flex flex-col items-center justify-center border-l border-slate-200 pl-0 md:pl-8 mt-4 md:mt-0">
+              <div className="relative w-64 h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                    <PolarGrid />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 'bold' }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                    <Radar name="Portfolio" dataKey="A" stroke="#2563eb" fill="#3b82f6" fillOpacity={0.2} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col gap-6">
+          <div className="flex-1 bg-white rounded shadow-sm border border-slate-200 p-6 flex flex-col justify-center">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className={`material-symbols-outlined ${eligibilityIcon} text-[18px]`}>
+                  {isEligible ? 'verified' : 'block'}
+                </span>
+                <span className="text-xs font-bold uppercase text-slate-500 tracking-wide">Compliance Tier</span>
+              </div>
+              <EligibilityBadge source={eligibilitySource} />
+            </div>
+            <p className={`text-xl font-bold mb-1 ${isEligible ? 'text-slate-900' : 'text-red-600'}`}>
+              {isEligible ? 'Protocol-Eligible' : 'RWA Proxy Not Eligible'}
+            </p>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              {eligibilityStatus?.details
+                ?? (isEligible
+                  ? 'Address whitelisted for Bucket A (Balancer) LP interaction'
+                  : 'RWA proxy leg disabled due to eligibility status')}
+            </p>
+          </div>
+          <div className="flex-1 bg-white rounded shadow-sm border border-slate-200 p-6 flex flex-col justify-center">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="material-symbols-outlined text-purple-600 text-[18px]">history</span>
+              <span className="text-xs font-bold uppercase text-slate-500 tracking-wide">Last Audit ID</span>
+            </div>
+            {plan.passport.hash ? (
+              <p className="text-sm font-bold text-slate-900 font-mono mb-1 break-all">{plan.passport.hash}</p>
+            ) : (
+              <span className="text-sm text-slate-400 font-mono animate-pulse">Computing hash...</span>
+            )}
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">Deterministic hash of current allocation & risk vectors</p>
+            <button onClick={handleCopyHash} className="mt-1 text-[10px] text-slate-400 hover:text-slate-600 font-mono flex items-center gap-1 transition-colors">
+              <span className="material-symbols-outlined text-[12px]">{copied ? 'done' : 'content_copy'}</span>
+              {copied ? 'Copied' : 'Copy Hash'}
+            </button>
+          </div>
+        </div>
+      </div>
+      {plan.passport.explanations && plan.passport.explanations.length > 0 && (
+        <div className="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-blue-600 text-[18px]">psychology</span>
+              <h2 className="text-sm font-bold text-slate-900">Allocation Rationale</h2>
+            </div>
+            <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-bold uppercase tracking-wider border border-blue-100">
+              RULE-DERIVED
+            </span>
+          </div>
+          <div className="p-6">
+            <ul className="space-y-3">
+              {plan.passport.explanations.map((explanation, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span className="mt-1 w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                    <span className="text-[10px] font-bold text-slate-500">{i + 1}</span>
+                  </span>
+                  <p className="text-sm text-slate-700 leading-relaxed">{explanation}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+          <h2 className="text-sm font-bold text-slate-900">Detailed Metrics</h2>
+          <RiskSourceBadge source={riskSource} />
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50 border-b border-slate-200">
+                <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Metric ID</th>
+                <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Indicator Name</th>
+                <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Category</th>
+                <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Score</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 text-sm">
+              {[
+                { id: 'R-CTR-01', name: 'Smart Contract Risk', category: 'Technical', score: plan.passport.radarData.contract },
+                { id: 'R-LIQ-02', name: 'Liquidity / Exit Risk', category: 'Liquidity', score: plan.passport.radarData.liquidity },
+                { id: 'R-ORC-03', name: 'Oracle / Pricing Risk', category: 'Data', score: plan.passport.radarData.oracle },
+                { id: 'R-MKT-04', name: 'Market Risk', category: 'Financial', score: plan.passport.radarData.market },
+                { id: 'R-OPS-05', name: 'Operational Risk', category: 'Process', score: plan.passport.radarData.operational },
+              ].map((metric) => {
+                const status = getMetricStatus(metric.score);
+                return (
+                  <tr key={metric.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-3 font-mono text-slate-500 text-xs">{metric.id}</td>
+                    <td className="px-6 py-3 font-medium text-slate-900">{metric.name}</td>
+                    <td className="px-6 py-3 text-slate-500 text-xs">{metric.category}</td>
+                    <td className="px-6 py-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${status.colorClasses}`}>
+                        {status.label}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3 text-right font-mono text-slate-900 text-xs">{metric.score}/100</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {(!riskSource || riskSource === 'demo_defaults') && (
+          <div className="px-6 py-3 bg-amber-50 border-t border-amber-100 flex items-center gap-2">
+            <span className="material-symbols-outlined text-amber-600 text-[14px]">info</span>
+            <p className="text-[11px] text-amber-700 font-medium">
+              Risk dimensions use demo defaults — not sourced from protocol or on-chain risk feeds.
+            </p>
+          </div>
+        )}
+        {riskSource && riskSource !== 'demo_defaults' && (
+          <div className="px-6 py-3 bg-blue-50 border-t border-blue-100 flex items-center gap-2">
+            <span className="material-symbols-outlined text-blue-600 text-[14px]">check_circle</span>
+            <p className="text-[11px] text-blue-700 font-medium">
+              Risk dimensions sourced from {riskSource.replace(/_/g, ' ')}.{riskConfig?.fetchedAt ? ` Last updated: ${new Date(riskConfig.fetchedAt).toLocaleString()}` : ''}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Risk Data Sources Panel */}
+      <div className="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
+        <button
+          onClick={() => setSourcesExpanded(!sourcesExpanded)}
+          className="w-full px-6 py-4 border-b border-slate-200 flex justify-between items-center hover:bg-gray-50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-blue-600 text-[18px]">search</span>
+            <h2 className="text-sm font-bold text-slate-900">Risk Data Sources</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <RiskSourceBadge source={riskSource} />
+            <span className="material-symbols-outlined text-slate-400 text-[18px] transition-transform" style={{ transform: sourcesExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+              expand_more
+            </span>
+          </div>
+        </button>
+        {sourcesExpanded && (
+          <div className="p-6">
+            {riskDataSources && riskDataSources.length > 0 ? (
+              <ul className="space-y-2">
+                {riskDataSources.map((detail, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-1 shrink-0">•</span>
+                    <p className="text-sm text-slate-700 leading-relaxed">{detail}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-slate-500">No detailed source information available. Risk data uses static defaults.</p>
+            )}
+            {riskConfig?.fetchedAt && (
+              <p className="text-xs text-slate-500 font-mono mt-4">Last updated: {riskConfig.fetchedAt}</p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

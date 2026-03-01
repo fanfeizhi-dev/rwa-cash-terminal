@@ -1,0 +1,26 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "deployer": "0x851D512C49E08d1A925458C5a77A083CcCf39f67",
+  "poolId": "0x440953587224069bea16c06946a9f092915f0c750002000000000000000002d0",
+  "poolAddress": "0x440953587224069bEa16c06946a9F092915f0c75",
+  "poolName": "50 USDC 50 WETH",
+  "poolSymbol": "B-50USDC-50WETH",
+  "tokens": {
+    "USDC": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "WETH": "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9"
+  },
+  "weights": "50/50",
+  "swapFee": "0.3%",
+  "initialLiquidity": {
+    "USDC": "30",
+    "WETH": "0.01"
+  },
+  "txHashes": {
+    "create": "0x786f010e3238a55bc3acfe32c2ebabdefacf4a028d734a76ee6ed68211f7c593",
+    "approveUsdc": "0xc64ca5e7e34bfb55e9a80bdddb2b47663a37c75b46cc4f0ee3a36def2233f84b",
+    "approveWeth": "0x4f8753fd50e2c7b448a61adce5b2e8f041692941f6180681f93f23e9570467a7",
+    "joinPool": "0xbb3aeccb480ba920a368aefc69cc55104a9d06a6cacfca8774d8efc560f7166f"
+  },
+  "deployedAt": "2026-02-28T18:10:01.260Z"
+}
